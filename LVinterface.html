@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Louis Vuitton - Regional Pricing & Anti-Arbitrage Strategy</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F9FA;
+            color: #1F2937;
+        }
+
+        .font-serif-title {
+            font-family: 'Cinzel', serif;
+        }
+
+        .bg-lv-navy { background-color: #1B365D; }
+        .text-lv-navy { color: #1B365D; }
+        .border-lv-navy { border-color: #1B365D; }
+
+        .bg-lv-gold { background-color: #C5A059; }
+        .text-lv-gold { color: #C5A059; }
+        .border-lv-gold { border-color: #C5A059; }
+
+        .bg-lv-cream { background-color: #FDFBF7; }
+        .bg-lv-card { background-color: #FFFFFF; }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            max-height: 380px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Custom scrollbar for subtle elegant feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F1F1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C5A059;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-lv-cream min-h-screen flex flex-col">
+
+    <!-- Chosen Palette: LV Heritage Executive (Champagne Cream #FDFBF7, Navy #1B365D, Monogram Bronze #C5A059) -->
+
+    <!-- Application Structure Plan:
+         Designed as a dual-mode interactive executive portal:
+         1. Interactive Slide Navigation Mode: Faithfully reproduces Stargazers Consulting structured layouts (Overview/Analysis, 3-Column Solution, Customer Journey Flow).
+         2. Dynamic Financial & Arbitrage Simulator: Allows executives to stress-test price gap scenarios, Daigou purchase caps, and local EU demand elasticity.
+         3. Interactive Client Journey Simulator: Step-by-step walkthrough of CRM checks, passport verification, and bespoke mainland salons.
+         Structure rationale: Enables senior stakeholders to review presentation slides while actively testing the quantitative logic behind freezing European prices and implementing targeted quota controls. -->
+
+    <!-- Visualization & Content Choices:
+         - Market Breakdown & Price Gap: Chart.js Donut & Bar Charts (Canvas based) to illustrate regional revenue distribution and the >40% China vs EU price gap.
+         - 3-Pillar Solution Explorer: Interactive card toggles providing operational detail on EU price freezing, passport quota caps, and bespoke China salons.
+         - Client Journey Process Flow: Styled HTML/CSS step nodes with interactive transactional simulation for Daigou mitigation without SVG or Mermaid.
+         - Arbitrage Scenario Model: Chart.js dynamic grouped bar chart responding to live user sliders balancing local EU demand vs tourist arbitrage. -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Top Executive Header -->
+    <header class="bg-lv-navy text-white shadow-md border-b-2 border-lv-gold">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-lv-gold font-serif-title text-2xl font-bold tracking-widest">LOUIS VUITTON</span>
+                <span class="text-xs bg-lv-gold text-lv-navy font-semibold px-2 py-1 rounded uppercase tracking-wider">Strategy Briefing</span>
+            </div>
+            <div class="text-center md:text-right">
+                <h1 class="text-lg font-semibold text-gray-100">Regional Pricing & Anti-Arbitrage Strategy</h1>
+                <p class="text-xs text-gray-300">Protecting European Core Equity & Managing Chinese Arbitrage</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-14">
+                <div class="flex space-x-2 sm:space-x-8 overflow-x-auto py-2">
+                    <button onclick="switchTab('slide1')" id="tab-slide1" class="nav-tab px-3 py-1 rounded-md text-sm font-medium transition-colors text-lv-navy bg-gray-100 font-semibold border-b-2 border-lv-navy whitespace-nowrap">
+                        Slide 1: Market Landscape & Dilemma
+                    </button>
+                    <button onclick="switchTab('slide2')" id="tab-slide2" class="nav-tab px-3 py-1 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-lv-navy whitespace-nowrap">
+                        Slide 2: 3-Pillar Solution
+                    </button>
+                    <button onclick="switchTab('slide3')" id="tab-slide3" class="nav-tab px-3 py-1 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-lv-navy whitespace-nowrap">
+                        Slide 3: Client Journey Model
+                    </button>
+                    <button onclick="switchTab('simulator')" id="tab-simulator" class="nav-tab px-3 py-1 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-lv-navy whitespace-nowrap">
+                        Interactive Strategic Simulator
+                    </button>
+                </div>
+                <div class="hidden lg:flex items-center space-x-2 text-xs text-gray-500">
+                    <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                    <span>Stargazers Template Format</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+
+        <!-- ==================================================================== -->
+        <!-- SLIDE 1: MARKET LANDSCAPE & STRATEGIC DILEMMA -->
+        <!-- ==================================================================== -->
+        <section id="sec-slide1" class="space-y-6">
+            <!-- Context Banner -->
+            <div class="bg-white p-5 rounded-lg border-l-4 border-lv-navy shadow-sm">
+                <h2 class="text-xl font-bold text-lv-navy font-serif-title mb-2">Executive Context: The Pricing Disparity Paradox</h2>
+                <p class="text-sm text-gray-700 leading-relaxed">
+                    This analysis addresses the critical managerial challenge facing Louis Vuitton leadership: mitigating the <strong>>40% regional price gap</strong> between mainland China and Europe without compromising our core market base. Raising European prices to force global price parity dampens demand among local European consumers already facing economic austerity. The strategic imperatives below demonstrate why protecting local European market resilience must take priority over quick-fix arbitrage narrowing.
+                </p>
+            </div>
+
+            <!-- Stargazers Overview Template Container -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <!-- Slide Header Banner -->
+                <div class="bg-lv-navy text-white px-6 py-4 border-b-2 border-lv-gold">
+                    <span class="text-xs font-semibold text-lv-gold uppercase tracking-wider">Slide 1 / Stargazers Consulting Overview Layout</span>
+                    <h3 class="text-lg md:text-xl font-bold">Protecting the European Core: Why Raising European Prices to Fix Chinese Arbitrage Threatens Long-Term Equity</h3>
+                </div>
+
+                <!-- Slide Layout Grid (2/3 Left Panel, 1/3 Right Panel) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+                    
+                    <!-- LEFT PANEL (2/3 Width): Data & Quantitative Context -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <!-- Quantitative Stat Callout Circles -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-lv-cream p-4 rounded-xl text-center border border-gray-200 shadow-sm hover:border-lv-gold transition-all">
+                                <div class="text-3xl font-extrabold text-lv-navy mb-1">&gt;40%</div>
+                                <div class="text-xs font-semibold text-gray-800 uppercase tracking-wide">Price Gap</div>
+                                <p class="text-xs text-gray-500 mt-1">Mainland China vs. Europe tariff & duty disparity</p>
+                            </div>
+                            <div class="bg-lv-cream p-4 rounded-xl text-center border border-gray-200 shadow-sm hover:border-lv-gold transition-all">
+                                <div class="text-3xl font-extrabold text-lv-gold mb-1">35%+</div>
+                                <div class="text-xs font-semibold text-gray-800 uppercase tracking-wide">EU Tourist Sales</div>
+                                <p class="text-xs text-gray-500 mt-1">European luxury sales driven by visiting Chinese shoppers</p>
+                            </div>
+                            <div class="bg-lv-cream p-4 rounded-xl text-center border border-gray-200 shadow-sm hover:border-lv-gold transition-all">
+                                <div class="text-3xl font-extrabold text-lv-navy mb-1">28%</div>
+                                <div class="text-xs font-semibold text-gray-800 uppercase tracking-wide">Core EU Share</div>
+                                <p class="text-xs text-gray-500 mt-1">Total LV revenue anchored in Europe (Largest region base)</p>
+                            </div>
+                        </div>
+
+                        <!-- Visualization Block: Regional Revenue & Price Gap Comparison -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-700 uppercase mb-2 text-center">Regional Revenue Breakdown (% Total)</h4>
+                                <div class="chart-container">
+                                    <canvas id="chartRegionalRevenue"></canvas>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-700 uppercase mb-2 text-center">Average Speedy 30 Bag Price (EUR Equivalent)</h4>
+                                <div class="chart-container">
+                                    <canvas id="chartPriceGap"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-Banner: Strategic Risks -->
+                        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg space-y-2">
+                            <h4 class="text-xs font-bold text-red-800 uppercase tracking-wider flex items-center">
+                                <span class="mr-2 text-base">&#9888;</span> Strategic Risk of Uniform Regional Price Equalization
+                            </h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-red-950">
+                                <div class="bg-white p-2.5 rounded shadow-sm border border-red-100">
+                                    <strong>1. Domestic Backlash:</strong> Local European buyers face severe economic austerity; sharp price hikes alienate traditional local VIPs and shrink steady footfall.
+                                </div>
+                                <div class="bg-white p-2.5 rounded shadow-sm border border-red-100">
+                                    <strong>2. Strategic Over-Reliance:</strong> Pivoting pricing solely around Chinese tourist flows exposes LV to external travel shocks and international tariff volatility.
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT PANEL (1/3 Width): Analysis & Overview Callout Box -->
+                    <div class="bg-lv-navy text-white p-6 rounded-xl flex flex-col justify-between shadow-lg relative overflow-hidden">
+                        <div class="space-y-4">
+                            <div class="border-b border-lv-gold pb-3">
+                                <span class="text-xs text-lv-gold font-semibold uppercase tracking-widest">Analysis Callout</span>
+                                <h3 class="text-lg font-bold font-serif-title mt-1">Strategic Direction</h3>
+                            </div>
+
+                            <div class="space-y-4 text-xs text-gray-200 leading-relaxed">
+                                <div class="bg-white/10 p-3 rounded-lg border border-white/10">
+                                    <p class="font-semibold text-lv-gold text-sm mb-1">&#10003; Protect the European Base</p>
+                                    <p>European sales represent our foundation. Pricing policy must prioritize local European demand resilience over quick-fix arbitrage narrowing.</p>
+                                </div>
+
+                                <div class="bg-white/10 p-3 rounded-lg border border-white/10">
+                                    <p class="font-semibold text-lv-gold text-sm mb-1">&#10003; Prevent Single-Market Overexposure</p>
+                                    <p>Relying on Chinese tourist arbitrage distorts regional inventory and risks severe downside if international travel or tariff policies fluctuate.</p>
+                                </div>
+
+                                <div class="bg-white/10 p-3 rounded-lg border border-white/10">
+                                    <p class="font-semibold text-lv-gold text-sm mb-1">&#10003; Non-Price Anti-Arbitrage</p>
+                                    <p>Address grey-market reselling (Daigou) through strict quantitative distribution controls rather than local consumer price penalties.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-gray-700 text-center">
+                            <span class="text-xs text-lv-gold italic font-serif-title">Stargazers Consulting Strategy Brief</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================================================================== -->
+        <!-- SLIDE 2: 3-PILLAR STRATEGIC SOLUTION -->
+        <!-- ==================================================================== -->
+        <section id="sec-slide2" class="space-y-6 hidden">
+            <!-- Context Banner -->
+            <div class="bg-white p-5 rounded-lg border-l-4 border-lv-navy shadow-sm">
+                <h2 class="text-xl font-bold text-lv-navy font-serif-title mb-2">Executive Context: Decoupling Pricing from Tourist Arbitrage</h2>
+                <p class="text-sm text-gray-700 leading-relaxed">
+                    To eliminate grey-market arbitrage while safeguarding our European customer base, Louis Vuitton must implement a <strong>3-pillar structural response</strong>. By freezing prices in Europe, placing strict global purchase caps on high-arbitrage canvas lines, and elevating domestic Chinese VIP offerings into bespoke non-logo categories, LV achieves sustainable growth without diluting brand equity.
+                </p>
+            </div>
+
+            <!-- Stargazers 3-Column Solution Template Container -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <!-- Slide Header Banner -->
+                <div class="bg-lv-navy text-white px-6 py-4 border-b-2 border-lv-gold">
+                    <span class="text-xs font-semibold text-lv-gold uppercase tracking-wider">Slide 2 / Stargazers Consulting 3-Column Solution Layout</span>
+                    <h3 class="text-lg md:text-xl font-bold">3-Pillar Solution: Decoupling European Pricing from Tourist Arbitrage to Secure Sustainable Growth</h3>
+                </div>
+
+                <!-- 3 Columns Grid -->
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- COLUMN 1: PILLAR I -->
+                    <div class="bg-lv-cream rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow">
+                        <div>
+                            <div class="bg-lv-navy text-white p-4 border-b-2 border-lv-gold">
+                                <span class="text-xs text-lv-gold uppercase tracking-widest font-semibold">Pillar I</span>
+                                <h4 class="text-base font-bold font-serif-title">Anchor Local EU Pricing</h4>
+                                <p class="text-xs text-gray-300 mt-1">Maintain Price Stability in European Home Markets</p>
+                            </div>
+                            
+                            <!-- Visual Box -->
+                            <div class="p-4 bg-gray-100 border-b border-gray-200 flex justify-center items-center h-32 text-center">
+                                <div class="space-y-1">
+                                    <span class="text-4xl">&#127963;</span>
+                                    <p class="text-xs font-bold text-lv-navy uppercase">Paris & London Flagship Core</p>
+                                    <p class="text-xs text-gray-500">Protecting domestic buyer traffic</p>
+                                </div>
+                            </div>
+
+                            <div class="p-5 space-y-3 text-xs text-gray-700">
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Freeze Regional Price Hikes:</strong> Reject price increases in Europe aimed solely at closing the Chinese price gap.</p>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Shield Domestic Buyers:</strong> Protect European consumers facing macroeconomic inflation, preserving heritage brand loyalty.</p>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Protect Foundation Share:</strong> European sales anchor total brand operating profit and long-term prestige.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-white border-t border-gray-200">
+                            <button onclick="togglePillarDetail(1)" class="w-full text-center py-2 bg-lv-navy text-white text-xs font-semibold rounded hover:bg-blue-900 transition-colors">
+                                View Pillar I Mechanics &rarr;
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 2: PILLAR II -->
+                    <div class="bg-lv-cream rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow">
+                        <div>
+                            <div class="bg-lv-navy text-white p-4 border-b-2 border-lv-gold">
+                                <span class="text-xs text-lv-gold uppercase tracking-widest font-semibold">Pillar II</span>
+                                <h4 class="text-base font-bold font-serif-title">Targeted Quota Controls</h4>
+                                <p class="text-xs text-gray-300 mt-1">Restrict Commercial Arbitrage & Daigou Reselling</p>
+                            </div>
+                            
+                            <!-- Visual Box -->
+                            <div class="p-4 bg-gray-100 border-b border-gray-200 flex justify-center items-center h-32 text-center">
+                                <div class="space-y-1">
+                                    <span class="text-4xl">&#128179;</span>
+                                    <p class="text-xs font-bold text-lv-navy uppercase">Global POS CRM Integration</p>
+                                    <p class="text-xs text-gray-500">Passport-linked quota enforcement</p>
+                                </div>
+                            </div>
+
+                            <div class="p-5 space-y-3 text-xs text-gray-700">
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Strict Purchase Caps:</strong> Implement global passport-linked limits on high-arbitrage SKUs (e.g., max 2 monogram bags/quarter).</p>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Neutralize Commercial Daigou:</strong> Dismantle bulk reseller syndicates without penalizing high-value genuine tourists.</p>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Centralized POS Analytics:</strong> Real-time cross-border client identification at point-of-sale in Paris, London, and Milan.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-white border-t border-gray-200">
+                            <button onclick="togglePillarDetail(2)" class="w-full text-center py-2 bg-lv-navy text-white text-xs font-semibold rounded hover:bg-blue-900 transition-colors">
+                                View Pillar II Mechanics &rarr;
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 3: PILLAR III -->
+                    <div class="bg-lv-cream rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow">
+                        <div>
+                            <div class="bg-lv-navy text-white p-4 border-b-2 border-lv-gold">
+                                <span class="text-xs text-lv-gold uppercase tracking-widest font-semibold">Pillar III</span>
+                                <h4 class="text-base font-bold font-serif-title">Elevate Mainland VIP Value</h4>
+                                <p class="text-xs text-gray-300 mt-1">Shift Focus in China from Price to Exclusive Experience</p>
+                            </div>
+                            
+                            <!-- Visual Box -->
+                            <div class="p-4 bg-gray-100 border-b border-gray-200 flex justify-center items-center h-32 text-center">
+                                <div class="space-y-1">
+                                    <span class="text-4xl">&#128092;</span>
+                                    <p class="text-xs font-bold text-lv-navy uppercase">Bespoke Salons & High-End Leather</p>
+                                    <p class="text-xs text-gray-500">Unbranded $3,500+ luxury focus</p>
+                                </div>
+                            </div>
+
+                            <div class="p-5 space-y-3 text-xs text-gray-700">
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Bespoke Differentiation:</strong> Expand non-logo, high-end ($3,500+) bespoke leather goods exclusive to domestic Chinese flagship salons.</p>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Experiential Retention:</strong> Convert mainland boutiques into invitation-only luxury salons to justify domestic price premiums.</p>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-lv-gold font-bold text-sm">&#9658;</span>
+                                    <p><strong>Insulate Against Logo Fatigue:</strong> Shift ultra-high-net-worth Chinese buyers toward subtle luxury and craftsmanship.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-white border-t border-gray-200">
+                            <button onclick="togglePillarDetail(3)" class="w-full text-center py-2 bg-lv-navy text-white text-xs font-semibold rounded hover:bg-blue-900 transition-colors">
+                                View Pillar III Mechanics &rarr;
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Summary Banner -->
+                <div class="bg-gray-100 border-t border-gray-200 p-4 text-center">
+                    <p class="text-xs font-bold text-lv-navy">
+                        <span class="text-lv-gold uppercase mr-2">[Strategic Objective]</span> Sustain foundational European revenues while curbing grey-market arbitrage through smart volume controls rather than alienating local European consumers.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal/Expand Container for Pillar Details -->
+            <div id="pillarDetailModal" class="hidden bg-white p-6 rounded-xl border border-lv-gold shadow-lg transition-all">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 id="pillarDetailTitle" class="text-lg font-bold text-lv-navy font-serif-title"></h3>
+                    <button onclick="closePillarDetail()" class="text-gray-400 hover:text-gray-600 font-bold">&times; Close</button>
+                </div>
+                <div id="pillarDetailContent" class="mt-4 text-xs text-gray-700 space-y-2"></div>
+            </div>
+        </section>
+
+        <!-- ==================================================================== -->
+        <!-- SLIDE 3: CLIENT JOURNEY MODEL & PROCESS FLOW -->
+        <!-- ==================================================================== -->
+        <section id="sec-slide3" class="space-y-6 hidden">
+            <!-- Context Banner -->
+            <div class="bg-white p-5 rounded-lg border-l-4 border-lv-navy shadow-sm">
+                <h2 class="text-xl font-bold text-lv-navy font-serif-title mb-2">Executive Context: Operationalizing Multi-Tier Demand Management</h2>
+                <p class="text-sm text-gray-700 leading-relaxed">
+                    This process journey illustrates how Louis Vuitton channels demand across different customer segments without triggering cross-border price distortions. By segmenting the customer experience into <strong>EU Local Loyalty</strong>, <strong>Controlled Tourist Shopping</strong>, and <strong>Mainland China Bespoke VIP Retaining</strong>, LV neutralizes commercial Daigou activity while keeping core European clients loyal.
+                </p>
+            </div>
+
+            <!-- Stargazers Process Flow / Customer Journey Layout -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <!-- Slide Header Banner -->
+                <div class="bg-lv-navy text-white px-6 py-4 border-b-2 border-lv-gold">
+                    <span class="text-xs font-semibold text-lv-gold uppercase tracking-wider">Slide 3 / Stargazers Consulting Customer Journey & Business Flow Layout</span>
+                    <h3 class="text-lg md:text-xl font-bold">Differentiated Client Journey: Channeling Demand Across Regions Without Price Distortions</h3>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+                    
+                    <!-- LEFT PANEL (2/3 Width): Interactive Step-by-Step Flow -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <!-- Flow Diagram Nodes -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+                            
+                            <!-- STAGE 1 -->
+                            <div class="bg-lv-cream p-4 rounded-xl border-2 border-lv-navy flex flex-col justify-between space-y-3 relative">
+                                <div class="flex items-center justify-between">
+                                    <span class="w-8 h-8 rounded-full bg-lv-navy text-white font-bold flex items-center justify-center text-xs">EU</span>
+                                    <span class="text-[10px] font-bold text-lv-navy bg-blue-100 px-2 py-0.5 rounded">Stage 1</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-lv-navy">Local European Client</h4>
+                                    <p class="text-xs text-gray-500 mt-0.5">Anchor Home Market</p>
+                                </div>
+                                <ul class="text-xs text-gray-600 space-y-1 border-t pt-2 border-gray-200">
+                                    <li>&bull; Fixed European retail prices</li>
+                                    <li>&bull; Private salon priority access</li>
+                                    <li>&bull; Dedicated local appointments</li>
+                                </ul>
+                                <button onclick="simulateJourneyStage(1)" class="w-full text-center py-1.5 bg-gray-200 hover:bg-lv-navy hover:text-white text-xs font-medium rounded transition-colors">
+                                    Test Stage 1 POS &rarr;
+                                </button>
+                            </div>
+
+                            <!-- STAGE 2 -->
+                            <div class="bg-lv-cream p-4 rounded-xl border-2 border-lv-gold flex flex-col justify-between space-y-3 relative">
+                                <div class="flex items-center justify-between">
+                                    <span class="w-8 h-8 rounded-full bg-lv-gold text-white font-bold flex items-center justify-center text-xs">TR</span>
+                                    <span class="text-[10px] font-bold text-lv-gold bg-yellow-100 px-2 py-0.5 rounded">Stage 2</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-lv-navy">Chinese Tourist (EU)</h4>
+                                    <p class="text-xs text-gray-500 mt-0.5">Controlled Arbitrage Flow</p>
+                                </div>
+                                <ul class="text-xs text-gray-600 space-y-1 border-t pt-2 border-gray-200">
+                                    <li>&bull; Global passport CRM tracking</li>
+                                    <li>&bull; SKU Quotas (Max 2 Canvas/Qtr)</li>
+                                    <li>&bull; Commercial Daigou blocked</li>
+                                </ul>
+                                <button onclick="simulateJourneyStage(2)" class="w-full text-center py-1.5 bg-gray-200 hover:bg-lv-gold hover:text-white text-xs font-medium rounded transition-colors">
+                                    Test Stage 2 POS &rarr;
+                                </button>
+                            </div>
+
+                            <!-- STAGE 3 -->
+                            <div class="bg-lv-cream p-4 rounded-xl border-2 border-lv-navy flex flex-col justify-between space-y-3 relative">
+                                <div class="flex items-center justify-between">
+                                    <span class="w-8 h-8 rounded-full bg-lv-navy text-white font-bold flex items-center justify-center text-xs">CN</span>
+                                    <span class="text-[10px] font-bold text-lv-navy bg-blue-100 px-2 py-0.5 rounded">Stage 3</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-lv-navy">Mainland China VIP</h4>
+                                    <p class="text-xs text-gray-500 mt-0.5">High-Value Retention</p>
+                                </div>
+                                <ul class="text-xs text-gray-600 space-y-1 border-t pt-2 border-gray-200">
+                                    <li>&bull; Invitation-only luxury salons</li>
+                                    <li>&bull; Bespoke non-logo ($3,500+)</li>
+                                    <li>&bull; High-margin leather goods</li>
+                                </ul>
+                                <button onclick="simulateJourneyStage(3)" class="w-full text-center py-1.5 bg-gray-200 hover:bg-lv-navy hover:text-white text-xs font-medium rounded transition-colors">
+                                    Test Stage 3 POS &rarr;
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <!-- Interactive POS Journey Simulator Output -->
+                        <div id="journeySimulatorOutput" class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-lv-navy uppercase tracking-wider">POS Simulation Console</span>
+                                <span class="text-[10px] bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">Live Simulation Active</span>
+                            </div>
+                            <p id="simText" class="text-xs text-gray-700 leading-relaxed">
+                                Select a stage above to simulate point-of-sale verification, passport volume caps, and CRM routing logic.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT PANEL (1/3 Width): Business Model Mechanics Box -->
+                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col justify-between space-y-4 shadow-sm">
+                        <div>
+                            <div class="border-b border-gray-300 pb-3">
+                                <span class="text-xs text-lv-gold font-bold uppercase tracking-widest">Model Mechanics</span>
+                                <h4 class="text-base font-bold text-lv-navy font-serif-title mt-1">Strategic Model Mechanics</h4>
+                            </div>
+
+                            <div class="space-y-3 mt-4 text-xs text-gray-700 leading-relaxed">
+                                <div class="bg-white p-3 rounded border border-gray-200 shadow-sm">
+                                    <span class="font-bold text-lv-navy block mb-1">1. Non-Price Arbitrage Control</span>
+                                    <p>By enforcing global passport purchase caps on entry-level canvas items, LV restricts bulk reseller profit margins without raising shelf prices in Europe.</p>
+                                </div>
+
+                                <div class="bg-white p-3 rounded border border-gray-200 shadow-sm">
+                                    <span class="font-bold text-lv-navy block mb-1">2. Local Loyalty Protection</span>
+                                    <p>European domestic consumers enjoy unhindered access and dedicated store appointments, preserving local footfall during economic austerity.</p>
+                                </div>
+
+                                <div class="bg-white p-3 rounded border border-gray-200 shadow-sm">
+                                    <span class="font-bold text-lv-navy block mb-1">3. High-Margin Upselling</span>
+                                    <p>Domestic Chinese boutiques transition away from basic logo bags toward bespoke, high-value leather ($3,500+), maximizing revenue per client in China.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-gray-200 text-center text-[11px] text-gray-500 italic">
+                            Stargazers Consulting Business Flow Architecture
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================================================================== -->
+        <!-- INTERACTIVE STRATEGIC SIMULATOR -->
+        <!-- ==================================================================== -->
+        <section id="sec-simulator" class="space-y-6 hidden">
+            <!-- Context Banner -->
+            <div class="bg-white p-5 rounded-lg border-l-4 border-lv-gold shadow-sm">
+                <h2 class="text-xl font-bold text-lv-navy font-serif-title mb-2">Interactive Financial & Arbitrage Stress-Test Simulator</h2>
+                <p class="text-sm text-gray-700 leading-relaxed">
+                    This interactive tool models the strategic and financial trade-offs between three regional pricing approaches: <strong>Blanket European Price Equalization</strong>, <strong>Status Quo (No Action)</strong>, and our recommended <strong>3-Pillar Anti-Arbitrage Strategy</strong>. Adjust the controls below to observe real-time impacts on European Local Sales, Chinese Domestic Revenue, Reseller Daigou Volume, and Overall Brand Equity.
+                </p>
+            </div>
+
+            <!-- Simulator Controls & Chart Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Controls Panel (1/3 Width) -->
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-md space-y-5">
+                    <h3 class="text-base font-bold text-lv-navy font-serif-title border-b pb-2">Simulation Parameters</h3>
+
+                    <!-- Control 1: Price Gap % -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="sliderPriceGap" class="text-gray-700">Target China-EU Price Gap:</label>
+                            <span id="valPriceGap" class="text-lv-navy font-bold">40%</span>
+                        </div>
+                        <input type="range" id="sliderPriceGap" min="10" max="50" step="5" value="40" oninput="updateSimulation()" class="w-full accent-lv-navy cursor-pointer">
+                        <p class="text-[11px] text-gray-500">Higher gap increases tourist arbitrage incentive.</p>
+                    </div>
+
+                    <!-- Control 2: EU Price Adjustment % -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="sliderEuHike" class="text-gray-700">European Price Increase:</label>
+                            <span id="valEuHike" class="text-lv-navy font-bold">0% (Freeze)</span>
+                        </div>
+                        <input type="range" id="sliderEuHike" min="0" max="30" step="5" value="0" oninput="updateSimulation()" class="w-full accent-lv-navy cursor-pointer">
+                        <p class="text-[11px] text-gray-500">Raising EU prices causes local consumer churn.</p>
+                    </div>
+
+                    <!-- Control 3: Daigou Quota Enforcement -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="sliderQuotaEnforcement" class="text-gray-700">Passport Quota Strictness:</label>
+                            <span id="valQuotaEnforcement" class="text-lv-navy font-bold">Strict (100%)</span>
+                        </div>
+                        <input type="range" id="sliderQuotaEnforcement" min="0" max="100" step="25" value="100" oninput="updateSimulation()" class="w-full accent-lv-navy cursor-pointer">
+                        <p class="text-[11px] text-gray-500">Limits bulk commercial reseller purchases.</p>
+                    </div>
+
+                    <!-- Control 4: Mainland Bespoke Expansion -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="sliderChinaBespoke" class="text-gray-700">China Bespoke Salon Upsell:</label>
+                            <span id="valChinaBespoke" class="text-lv-navy font-bold">High Expansion</span>
+                        </div>
+                        <input type="range" id="sliderChinaBespoke" min="0" max="100" step="25" value="75" oninput="updateSimulation()" class="w-full accent-lv-navy cursor-pointer">
+                        <p class="text-[11px] text-gray-500">Drives non-logo luxury sales in mainland China.</p>
+                    </div>
+
+                    <div class="pt-3 border-t text-center">
+                        <button onclick="resetSimulation()" class="text-xs text-lv-navy underline font-semibold hover:text-blue-800">
+                            Reset to Recommended 3-Pillar Defaults
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Simulation Output Display & Chart (2/3 Width) -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-md flex flex-col justify-between space-y-6">
+                    <div>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2">
+                            <h3 class="text-base font-bold text-lv-navy font-serif-title">Projected 3-Year Strategic Revenue & Margin Outcome</h3>
+                            <span class="text-xs bg-lv-gold text-lv-navy font-bold px-2.5 py-1 rounded">Live Model Output</span>
+                        </div>
+
+                        <!-- Dynamic Metrics Summary Cards -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                            <div class="bg-lv-cream p-3 rounded border text-center">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">Local EU Sales</span>
+                                <span id="outEuSales" class="text-base font-bold text-lv-navy">&euro;2,440M</span>
+                                <span id="outEuSalesDelta" class="text-[10px] text-green-600 block font-semibold">+4.2% Growth</span>
+                            </div>
+                            <div class="bg-lv-cream p-3 rounded border text-center">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">China Mainland Sales</span>
+                                <span id="outChinaSales" class="text-base font-bold text-lv-navy">&euro;3,280M</span>
+                                <span id="outChinaSalesDelta" class="text-[10px] text-green-600 block font-semibold">+18.5% Growth</span>
+                            </div>
+                            <div class="bg-lv-cream p-3 rounded border text-center">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">Reseller Daigou Vol.</span>
+                                <span id="outDaigouVol" class="text-base font-bold text-red-600">-65%</span>
+                                <span class="text-[10px] text-gray-500 block">Squelched</span>
+                            </div>
+                            <div class="bg-lv-cream p-3 rounded border text-center">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">Brand Equity Index</span>
+                                <span id="outBrandEquity" class="text-base font-bold text-lv-gold">94/100</span>
+                                <span class="text-[10px] text-green-600 block font-semibold">Exclusivity High</span>
+                            </div>
+                        </div>
+
+                        <!-- Chart.js Simulation Projection Canvas -->
+                        <div class="mt-6">
+                            <h4 class="text-xs font-bold text-gray-700 uppercase mb-2">3-Year Regional Revenue Projections (&euro; Millions)</h4>
+                            <div class="chart-container">
+                                <canvas id="chartSimulationResult"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded text-xs text-gray-600 border border-gray-200 flex items-center space-x-2">
+                        <span class="text-lv-gold font-bold text-lg">&#9432;</span>
+                        <p id="simulationInsightText">
+                            <strong>Strategic Insight:</strong> Freezing European prices protects local domestic revenue (&euro;2.44B), while passport quota controls curb Daigou leakage and propel domestic Chinese VIP sales into higher-margin bespoke lines.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="bg-lv-navy text-white border-t-2 border-lv-gold py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-300">
+            <div>
+                <span class="font-serif-title text-lv-gold font-bold text-sm">LOUIS VUITTON</span>
+                <span class="ml-2">&copy; 2026 Regional Pricing Strategy Briefing. Stargazers Consulting Framework.</span>
+            </div>
+            <div class="flex space-x-6">
+                <a href="#" onclick="switchTab('slide1')" class="hover:text-lv-gold transition-colors">Overview</a>
+                <a href="#" onclick="switchTab('slide2')" class="hover:text-lv-gold transition-colors">3-Pillar Solution</a>
+                <a href="#" onclick="switchTab('slide3')" class="hover:text-lv-gold transition-colors">Client Journey</a>
+                <a href="#" onclick="switchTab('simulator')" class="hover:text-lv-gold transition-colors">Stress-Test Simulator</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Global State & Chart Instances
+        let chartRegRevInstance = null;
+        let chartPriceGapInstance = null;
+        let chartSimInstance = null;
+
+        // Navigation Tab Switching
+        function switchTab(tabId) {
+            const tabs = ['slide1', 'slide2', 'slide3', 'simulator'];
+            tabs.forEach(t => {
+                document.getElementById(`sec-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${t}`);
+                btn.classList.remove('text-lv-navy', 'bg-gray-100', 'font-semibold', 'border-b-2', 'border-lv-navy');
+                btn.classList.add('text-gray-600');
+            });
+
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('text-gray-600');
+            activeBtn.classList.add('text-lv-navy', 'bg-gray-100', 'font-semibold', 'border-b-2', 'border-lv-navy');
+
+            // Trigger Chart renders when becoming visible
+            if (tabId === 'slide1') {
+                renderSlide1Charts();
+            } else if (tabId === 'simulator') {
+                updateSimulation();
+            }
+        }
+
+        // Initialize Slide 1 Charts (Chart.js)
+        function renderSlide1Charts() {
+            // Regional Revenue Donut Chart
+            const ctxRev = document.getElementById('chartRegionalRevenue').getContext('2d');
+            if (chartRegRevInstance) chartRegRevInstance.destroy();
+            chartRegRevInstance = new Chart(ctxRev, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Europe Core', 'Asia-Pacific (ex JP)', 'Americas', 'Japan', 'Rest of World'],
+                    datasets: [{
+                        data: [28, 32, 18, 14, 8],
+                        backgroundColor: ['#1B365D', '#C5A059', '#3B82F6', '#9CA3AF', '#D1D5DB'],
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 10 }, boxWidth: 12 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.raw + '% Total Revenue';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Price Gap Comparison Bar Chart
+            const ctxGap = document.getElementById('chartPriceGap').getContext('2d');
+            if (chartPriceGapInstance) chartPriceGapInstance.destroy();
+            chartPriceGapInstance = new Chart(ctxGap, {
+                type: 'bar',
+                data: {
+                    labels: ['Europe (Paris)', 'US (New York)', 'Japan (Tokyo)', 'Mainland China'],
+                    datasets: [{
+                        label: 'Retail Price (EUR Equivalent)',
+                        data: [1100, 1280, 1350, 1580],
+                        backgroundColor: ['#1B365D', '#4B5563', '#6B7280', '#C5A059'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Price: €' + context.raw + ' (Gap vs EU: +' + Math.round(((context.raw - 1100)/1100)*100) + '%)';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 10 }, callback: v => '€' + v }
+                        },
+                        x: {
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Slide 2 Modal Mechanics
+        function togglePillarDetail(pillarNum) {
+            const modal = document.getElementById('pillarDetailModal');
+            const title = document.getElementById('pillarDetailTitle');
+            const content = document.getElementById('pillarDetailContent');
+
+            modal.classList.remove('hidden');
+
+            if (pillarNum === 1) {
+                title.innerText = "Pillar I Operational Mechanics: Anchor Local EU Pricing";
+                content.innerHTML = `
+                    <p><strong>Pricing Rule:</strong> Zero price increases targeting European residents. Maintain baseline entry pricing for canvas items at €1,100.</p>
+                    <p><strong>Local Customer Insulation:</strong> Local European residents with registered boutique history bypass general tourist queues and gain access to dedicated private appointment slots.</p>
+                    <p><strong>Strategic Rationale:</strong> Preserves brand affection and steady local footfall during economic austerity, protecting the 28% core market share foundation.</p>
+                `;
+            } else if (pillarNum === 2) {
+                title.innerText = "Pillar II Operational Mechanics: Targeted Quota Controls";
+                content.innerHTML = `
+                    <p><strong>Passport Linking:</strong> Global POS integration requires passport verification for tax-free tourist purchases across all European stores.</p>
+                    <p><strong>SKU Purchase Limits:</strong> Hard quota caps imposed on high-arbitrage classic canvas lines (e.g., Neverfull, Speedy, Alma)—maximum 2 canvas pieces per client per quarter globally.</p>
+                    <p><strong>Daigou Disruption:</strong> Squelches commercial reseller margin structures without penalizing genuine high-net-worth individual travelers.</p>
+                `;
+            } else if (pillarNum === 3) {
+                title.innerText = "Pillar III Operational Mechanics: Elevate Mainland VIP Value";
+                content.innerHTML = `
+                    <p><strong>Product Differentiation:</strong> Reserve top-tier non-logo leather goods, Capucines lines, and bespoke customization exclusive to mainland Chinese flagship salons ($3,500 - $35,000+ range).</p>
+                    <p><strong>Bespoke Salons:</strong> Transform Chinese boutiques into invitation-only luxury apartments featuring artisan demonstrations and private consultations.</p>
+                    <p><strong>Strategic Rationale:</strong> Shifts Chinese domestic spend away from price-sensitive logo products toward absolute luxury, insulating LV against logo fatigue.</p>
+                `;
+            }
+        }
+
+        function closePillarDetail() {
+            document.getElementById('pillarDetailModal').classList.add('hidden');
+        }
+
+        // Slide 3 Customer Journey Interactive Simulator
+        function simulateJourneyStage(stageNum) {
+            const consoleBox = document.getElementById('simText');
+            if (stageNum === 1) {
+                consoleBox.innerHTML = `
+                    <strong class="text-lv-navy">[STAGE 1 POS SIMULATION - LOCAL EUROPEAN CLIENT]</strong><br>
+                    &bull; <strong>Client Profile:</strong> Resident of Paris / Frequent EU Visitor.<br>
+                    &bull; <strong>POS Check:</strong> EU Resident CRM ID Verified. No passport quota triggered for domestic lines.<br>
+                    &bull; <strong>Perks Applied:</strong> Dedicated private salon appointment granted; local retail price maintained (€1,100).<br>
+                    &bull; <strong>Outcome:</strong> High customer retention; domestic market brand loyalty anchored.
+                `;
+            } else if (stageNum === 2) {
+                consoleBox.innerHTML = `
+                    <strong class="text-lv-gold">[STAGE 2 POS SIMULATION - CHINESE TOURIST IN PARIS]</strong><br>
+                    &bull; <strong>Client Profile:</strong> Chinese Passport Holder shopping at London Bond Street / Paris Vendôme.<br>
+                    &bull; <strong>POS Check:</strong> Passport scanned -> Central CRM tracking checks global purchase log.<br>
+                    &bull; <strong>Quota Action:</strong> Client has purchased 1 Monogram bag this quarter. Permitted to purchase 1 additional piece. Commercial Daigou bulk transaction (>2 pieces) flagged and blocked.<br>
+                    &bull; <strong>Outcome:</strong> Organic tourist shopping preserved; commercial reseller arbitrage neutralized.
+                `;
+            } else if (stageNum === 3) {
+                consoleBox.innerHTML = `
+                    <strong class="text-lv-navy">[STAGE 3 POS SIMULATION - MAINLAND CHINA VIP SALON]</strong><br>
+                    &bull; <strong>Client Profile:</strong> High-Net-Worth Individual at Shanghai Plaza 66 Boutique.<br>
+                    &bull; <strong>POS Check:</strong> Invitation-only salon access triggered. Offered unbranded Haute Marroquinerie line (€3,500 - €12,000).<br>
+                    &bull; <strong>Experience Action:</strong> In-store artisan fitting & bespoke color selection. Zero focus on FX price differential.<br>
+                    &bull; <strong>Outcome:</strong> Recaptures domestic revenue at maximum gross margin, overcoming the 40% tariff gap.
+                `;
+            }
+        }
+
+        // Stress-Test Simulator Logic & Chart Updates
+        function updateSimulation() {
+            const gap = parseInt(document.getElementById('sliderPriceGap').value);
+            const euHike = parseInt(document.getElementById('sliderEuHike').value);
+            const quota = parseInt(document.getElementById('sliderQuotaEnforcement').value);
+            const bespoke = parseInt(document.getElementById('sliderChinaBespoke').value);
+
+            // Update UI Labels
+            document.getElementById('valPriceGap').innerText = gap + '%';
+            document.getElementById('valEuHike').innerText = euHike === 0 ? '0% (Freeze)' : '+' + euHike + '%';
+            document.getElementById('valQuotaEnforcement').innerText = quota === 100 ? 'Strict (100%)' : quota + '% Enforced';
+            document.getElementById('valChinaBespoke').innerText = bespoke > 50 ? 'High Expansion' : 'Moderate Expansion';
+
+            // Calculate Model Metrics based on input logic
+            // European Local Sales: Baseline €2,440M. Decreases heavily if EU prices are hiked.
+            let euSales = 2440 * (1 - (euHike * 0.015));
+            let euSalesGrowth = ((euSales - 2340) / 2340 * 100).toFixed(1);
+
+            // China Mainland Sales: Baseline €3,280M. Increases with Bespoke focus & Quota restriction in EU.
+            let chinaSales = 2800 + (bespoke * 5) + (quota * 2.5) - (gap * 4);
+            let chinaSalesGrowth = ((chinaSales - 2750) / 2750 * 100).toFixed(1);
+
+            // Reseller Daigou Volume Reduction %: Higher quota + lower price gap squelches Daigou.
+            let daigouRed = Math.min(95, Math.round((quota * 0.6) + ((50 - gap) * 0.8)));
+
+            // Brand Equity Score (Out of 100): Penalized by high EU price hikes (local backlash) and low quota enforcement (mass logo dilution).
+            let brandEquity = Math.round(100 - (euHike * 0.8) - ((100 - quota) * 0.25) + (bespoke * 0.1));
+
+            // Update Display Metrics
+            document.getElementById('outEuSales').innerText = '€' + Math.round(euSales) + 'M';
+            document.getElementById('outEuSalesDelta').innerText = (euSalesGrowth >= 0 ? '+' : '') + euSalesGrowth + '% Growth';
+            document.getElementById('outEuSalesDelta').className = euSalesGrowth >= 0 ? 'text-[10px] text-green-600 block font-semibold' : 'text-[10px] text-red-600 block font-semibold';
+
+            document.getElementById('outChinaSales').innerText = '€' + Math.round(chinaSales) + 'M';
+            document.getElementById('outChinaSalesDelta').innerText = '+' + chinaSalesGrowth + '% Growth';
+
+            document.getElementById('outDaigouVol').innerText = '-' + daigouRed + '%';
+            document.getElementById('outBrandEquity').innerText = brandEquity + '/100';
+
+            // Insight Narrative Text Logic
+            const insight = document.getElementById('simulationInsightText');
+            if (euHike > 10) {
+                insight.innerHTML = `<strong>Warning:</strong> Raising European prices by +${euHike}% narrows the Chinese gap, but causes severe local consumer backlash in Europe (Local EU Sales drop to &euro;${Math.round(euSales)}M). This threatens core brand equity.`;
+            } else if (quota < 50) {
+                insight.innerHTML = `<strong>Warning:</strong> Weak quota enforcement enables commercial Daigou networks to exploit the ${gap}% price gap, diluting brand exclusivity in both Europe and China.`;
+            } else {
+                insight.innerHTML = `<strong>Optimal Strategy:</strong> Freezing European prices protects local domestic revenue (&euro;${Math.round(euSales)}M), while strict passport quota controls (-${daigouRed}% Daigou) channel Chinese demand into high-margin domestic bespoke salons (&euro;${Math.round(chinaSales)}M).`;
+            }
+
+            // Update Simulator Chart.js
+            renderSimulationChart(euSales, chinaSales, gap, euHike);
+        }
+
+        function renderSimulationChart(euSales, chinaSales, gap, euHike) {
+            const ctxSim = document.getElementById('chartSimulationResult').getContext('2d');
+            if (chartSimInstance) chartSimInstance.destroy();
+
+            chartSimInstance = new Chart(ctxSim, {
+                type: 'bar',
+                data: {
+                    labels: ['Year 1', 'Year 2', 'Year 3 (Projected)'],
+                    datasets: [
+                        {
+                            label: 'Local EU Revenue',
+                            data: [Math.round(euSales * 0.92), Math.round(euSales * 0.96), Math.round(euSales)],
+                            backgroundColor: '#1B365D'
+                        },
+                        {
+                            label: 'China Domestic Revenue',
+                            data: [Math.round(chinaSales * 0.8), Math.round(chinaSales * 0.9), Math.round(chinaSales)],
+                            backgroundColor: '#C5A059'
+                        },
+                        {
+                            label: 'Controlled Tourist Revenue (EU)',
+                            data: [1200, 1250, 1310],
+                            backgroundColor: '#9CA3AF'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ctx.dataset.label + ': €' + ctx.raw + 'M'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, ticks: { font: { size: 10 } } },
+                        y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10 }, callback: v => '€' + v + 'M' } }
+                    }
+                }
+            });
+        }
+
+        function resetSimulation() {
+            document.getElementById('sliderPriceGap').value = 40;
+            document.getElementById('sliderEuHike').value = 0;
+            document.getElementById('sliderQuotaEnforcement').value = 100;
+            document.getElementById('sliderChinaBespoke').value = 75;
+            updateSimulation();
+        }
+
+        // Initial Load Event
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSlide1Charts();
+            updateSimulation();
+        });
+    </script>
+</body>
+</html>
